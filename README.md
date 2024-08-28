@@ -1,4 +1,4 @@
-# SWE 2710 - Group 1: Wordle
+# SWE 2710 - Group 1: Wordle Game
 
 > Important Note:
 > 
