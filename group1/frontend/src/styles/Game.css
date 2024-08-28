@@ -1,0 +1,454 @@
+body {
+  --close-button: #b22429;
+  --close-button-hover: red;
+  --sparkle: #aaaaaa;
+  --hint-color: #607c2f;
+  --hint-grad1: #7d915f;
+  --hint-grad2: #4d8f3e;
+  --correct: #4ea64e;
+  --misplaced: #a4a42e;
+  --incorrect: darkgray;
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--primary);
+  border-radius: 10px;
+  text-align: center;
+  height: calc(5vh + 2vmin);
+  width: calc(75vw - 40px);
+  box-shadow: var(--shadow);
+  gap: 5px;
+}
+
+.size-text {
+  margin-right: 5px;
+  margin-left: 5px;
+  margin-bottom: 5px;
+  color: var(--text-color);
+}
+
+.guess-left {
+  margin-right: auto;
+  margin-left: 25px;
+}
+
+/*Stats and how to play button*/
+.how-to-play-btn {
+  margin-left: 20px;
+  margin-right: 20px;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.reset-btn-container {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+  background-image: url("../resources/reset-icon.png");
+  width: 30px;
+  height: 30px;
+}
+
+.reset-btn-container:hover {
+  transition: all 0.25s;
+  filter: drop-shadow(var(--shadow));
+}
+
+.reset-btn-container:active {
+  transition: all 0.25s;
+  filter: none;
+}
+
+.reset-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 0px;
+  background: white;
+  mask-image: url("../resources/reset-icon.png");
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
+
+.reset-btn:active {
+  transition: all 0.25s;
+  background: rgb(255 100 120);
+}
+
+.reset-btn[data-spin="1"] {
+  animation: rb-spin 1s cubic-bezier(.25,.83,.6,1);
+}
+
+@keyframes rb-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.stat-btn {
+  margin-right: 35px;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.size-btn {
+  border: none;
+  margin-left: 5px;
+  width: 2.1em;
+  height: 2.1em;
+  border-radius: 3em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  background: var(--button-color);
+  cursor: pointer;
+  transition: all 450ms ease-in-out;
+  margin-right: 5px;
+}
+
+.how-to-play-btn img,
+.stat-btn img {
+  width: 30px;
+  height: auto;
+  background: transparent;
+  padding: 0;
+  border: none;
+  border-radius: 0px;
+}
+
+.input-div {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  display: flex;
+  margin-right: 10px;
+  margin-left: -5px;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  animation: flicker 2s linear infinite;
+  cursor: pointer;
+}
+
+.filled {
+  background-color: var(--hint-grad1);
+  color: white;
+}
+
+.fill {
+  background-color: var(--correct);
+}
+
+.icon {
+  color: var(--accent);
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+/*Game Container*/
+.game-container {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  text-align: center;
+  padding: 1%;
+  gap: 25px;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+
+/*modal for how to play the game*/
+.modal-dialog {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-color: transparent;
+}
+
+.modal-content {
+  width: 80%;
+  border-color: transparent;
+}
+.modal {
+  width: 60vw;
+  height: 70vh;
+  position: absolute;
+  margin-top: -30px;
+  margin-left: 78px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: none;
+  background-color: transparent;
+  display: none;
+  backdrop-filter: blur();
+}
+
+.modal-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 15px;
+  border: none;
+  background-color: transparent;
+}
+
+.close-modal {
+  position: absolute;
+  top: 10px;
+  right: 210px;
+  border: none;
+  background-color: var(--close-button);
+  border-radius: 8px;
+  color: white;
+  height: 20px;
+  font-size: 15px;
+}
+
+.close-modal:hover {
+  background-color: var(--close-button-hover);
+  color: white;
+}
+
+.close-modal:active {
+  transition: all 0.25s;
+  -webkit-transition: all 0.25s;
+  box-shadow: none;
+  transform: scale(0.98);
+}
+
+/*flip animation for when the user submits a word*/
+@keyframes flip {
+  0% {
+    transform: rotateX(0);
+  }
+  50% {
+    transform: rotateX(90deg);
+  }
+  100% {
+    transform: rotateX(0);
+  }
+}
+.flip {
+  animation: flip 0.3s ease forwards;
+}
+
+@keyframes letter-enter {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.letter-enter {
+  animation: letter-enter 0.1s ease;
+}
+
+/*shake animation for when the word is invalid*/
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(5px);
+  }
+  50% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+.shake {
+  animation: shake 0.5s;
+  animation-iteration-count: 1;
+}
+
+
+.hint-btn:hover {
+  background: linear-gradient(0deg, var(--hint-grad1), var(--hint-grad2));
+  /* box-shadow: inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4),
+    inset 0px -1px 0px 0px rgba(0, 0, 0, 0.2),
+    0px 0px 0px 1px rgba(255, 255, 255, 0.2),
+    0px 0px 14px 0px var(--hint-shadow-color); */
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+
+/*Hint button to provide a correct letter*/
+.hint-btn {
+  border: none;
+  margin-left: 8px;
+  width: 5.5em;
+  height: 2.1em;
+  border-radius: 3em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  background: var(--hint-color);
+  cursor: pointer;
+  transition: all 450ms ease-in-out;
+}
+.ai-btn {
+  border: none;
+  margin-left: 8px;
+  width: 4.0em;
+  height: 2.1em;
+  border-radius: 3em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  background: var(--button-color);
+  cursor: pointer;
+  transition: all 450ms ease-in-out;
+}
+
+
+
+.text {
+  font-weight: 600;
+  color: #AAAAAA;
+  font-size: medium;
+}
+
+.ai-btn:hover,
+.hint-btn:hover {
+  background: linear-gradient(0deg, var(--hint-grad1), var(--hint-grad2));
+  /* box-shadow: inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4),
+  inset 0px -1px 0px 0px rgba(0, 0, 0, 0.2),
+  0px 0px 0px 1px rgba(255, 255, 255, 0.2),
+    0px 0px 14px 0px var(--hint-shadow-color); */
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.ai-btn:active,
+.hint-btn:active {
+  transition: all 0.25s;
+  -webkit-transition: all 0.25s;
+  box-shadow: none;
+  transform: scale(0.98);
+}
+.ai-btn:hover .text,
+.hint-btn:hover .text {
+  color: white;
+}
+
+.ai-btn:hover .sparkle
+.hint-btn:hover .sparkle {
+  fill: white;
+  transform: scale(1.2);
+}
+
+.tests {
+  align-items: center;
+  display: flex;
+  margin-left: 8px;
+  margin-right: 8px;
+}
+/* Responsive adjustments */
+@media screen and (max-width: 1400px) {
+
+}
+
+@media screen and (max-width: 1200px) {
+
+}
+
+@media screen and (max-width: 600px) {
+
+  .game-header {
+    width: calc(105vw - 40px);
+  }
+
+  .size-text {
+    margin-right: 5px;
+    margin-left: 5px;
+    margin-bottom: 5px;
+  }
+
+  .guess-left {
+    display: none;
+  }
+
+  /*Stats and how to play button*/
+  .how-to-play-btn {
+    margin-left: 5px;
+    margin-right: 5px;
+
+  }
+
+  .stat-btn {
+    margin-right: 1px;
+    padding: 5px 5px;
+
+  }
+
+  .size-btn {
+    margin-left: 3px;
+    width: 1em;
+    height: 1em;
+    margin-right: 2px;
+  }
+
+  .size-text {
+    margin-right: 2px;
+    margin-left: 2px;
+  }
+
+  .header {
+    width: 90vw;
+    font-size: 14px;
+  }
+
+  .hint-btn {
+    margin-right: 10px;
+    width: 50px;
+    border-radius: 10px;
+  }
+
+  .stat-btn {
+    margin-right: 15px;
+  }
+
+  .attempts-counter {
+    margin-left: 15px;
+  }
+
+  .header-text {
+    margin-right: auto;
+    margin-left: 50px;
+
+  }
+
+}

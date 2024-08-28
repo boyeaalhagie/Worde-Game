@@ -1,0 +1,197 @@
+stages:
+  - install
+  - build
+  - test
+  - publish-backend
+  - deploy-backend
+  - publish-frontend
+  - deploy-frontend
+
+
+variables:
+  MAVEN_CLI_OPTS: "--batch-mode"
+
+  TAG_LATEST: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest
+  TAG_COMMIT: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA
+
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375
+
+  RUN_DEPLOY:     '$CI_PIPELINE_SOURCE != "merge_request_event" && $CI_COMMIT_BRANCH == "dev"'
+  NOT_RUN_DEPLOY: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH != "dev"'
+
+
+npm-install:
+  image: node:latest
+  stage: install
+  script: 
+    - cd ./frontend
+    - npm prune
+    - npm install
+  cache:
+    key: node-modules-cache
+    paths:
+      - frontend/node_modules/
+  only:
+    changes:
+      - .gitlab-ci.yml
+      - frontend/package.json
+
+
+build-backend:
+  image: maven:latest
+  stage: build
+  needs: []
+  script:
+    - cd ./backend
+    - mvn $MAVEN_CLI_OPTS compile
+  cache:
+    key: maven-cache
+    paths:
+      - backend/.m2/repository
+      - backend/target/
+      
+      
+test-backend:
+  image: maven:latest
+  stage: test
+  needs: ["build-backend"]
+  script:
+    - cd ./backend
+    - mvn $MAVEN_CLI_OPTS test
+  cache:
+    key: maven-cache
+    paths:
+      - backend/.m2/repository
+      - backend/target/
+
+
+build-frontend:
+  image: node:latest
+  stage: build
+  needs:
+    - job: npm-install
+      optional: true
+  script:
+    - cd ./frontend
+    - unset CI
+    - npm run build
+  cache:
+    key: node-modules-cache
+    paths:
+      - frontend/node_modules/
+      - frontend/build/
+
+
+publish-backend:
+  image: docker:latest
+  stage: publish-backend
+  needs: ["test-backend"]
+  services:
+    - docker:dind
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - ls
+    - docker build -f Dockerfile.backend -t $TAG_COMMIT -t $TAG_LATEST .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker push $TAG_COMMIT
+    - docker push $TAG_LATEST
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH != "dev"
+      when: never
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event" && $CI_COMMIT_BRANCH == "dev"
+      changes:
+      - .gitlab-ci.yml
+      - backend/**/*
+      - Dockerfile.backend
+      when: always
+
+
+deploy-backend:
+  image: alpine:latest
+  stage: deploy-backend
+  needs: ["publish-backend"]
+  tags:
+    - deployment
+  script:
+    - chmod og= $ID_RSA
+    - apk update && apk add openssh-client
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker pull $TAG_COMMIT"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker container rm -f backend-dev || true"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker run -d -p 8080:8080 --name backend-dev $TAG_COMMIT"
+  environment:
+    name: production
+    url: http://135.148.121.116
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH != "dev"
+      when: never
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event" && $CI_COMMIT_BRANCH == "dev"
+      changes:
+      - .gitlab-ci.yml
+      - backend/**/*
+      - Dockerfile.backend
+      when: always
+
+
+publish-frontend:
+  image: docker:latest
+  stage: publish-frontend
+  needs:
+    - job: build-frontend
+    - job: deploy-backend
+      optional: true
+  services:
+    - docker:dind
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - ls
+    - docker build -f Dockerfile.frontend -t $TAG_COMMIT -t $TAG_LATEST .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker push $TAG_COMMIT
+    - docker push $TAG_LATEST
+  cache:
+    key: node-modules-cache
+    paths:
+      - frontend/build/
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH != "dev"
+      when: never
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event" && $CI_COMMIT_BRANCH == "dev"
+      changes:
+      - .gitlab-ci.yml
+      - frontend/**/*
+      - Dockerfile.frontend
+      - apache-dev.conf
+      when: always
+
+
+deploy-frontend:
+  image: alpine:latest
+  stage: deploy-frontend
+  needs: ["publish-frontend"]
+  tags:
+    - deployment
+  script:
+    - chmod og= $ID_RSA
+    - apk update && apk add openssh-client
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker pull $TAG_COMMIT"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker container rm -f frontend-dev || true"
+    - ssh -i $ID_RSA -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "docker run -d -p 80:80 --name frontend-dev $TAG_COMMIT"
+  environment:
+    name: production
+    url: http://135.148.121.116
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH != "dev"
+      when: never
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event" && $CI_COMMIT_BRANCH == "dev"
+      changes:
+      - .gitlab-ci.yml
+      - frontend/**/*
+      - Dockerfile.frontend
+      - apache-dev.conf
+      when: always

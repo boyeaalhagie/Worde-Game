@@ -1,0 +1,51 @@
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/*
+Copied from blueprint.css to avoid
+importing and polluting the namespace
+ */
+.bp5-spinner {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    overflow: visible;
+    vertical-align: middle;
+}
+
+.bp5-spinner svg {
+    display: block;
+    box-sizing: inherit;
+}
+
+.bp5-spinner .bp5-spinner-track {
+    stroke: rgba(95, 107, 124, 0.2);
+}
+
+.bp5-spinner .bp5-spinner-head {
+    stroke: rgba(95, 107, 124, 0.8);
+    stroke-linecap: round;
+    transform-origin: center;
+    transition: stroke-dashoffset 200ms cubic-bezier(0.4, 1, 0.75, 0.9);
+}
+
+.bp5-spinner path {
+    fill-opacity: 0;
+}
+
+.bp5-spinner-animation {
+    animation: pt-spinner-animation 750ms linear infinite;
+}
+
+@keyframes pt-spinner-animation{
+    from {
+        transform:rotate(0deg);
+    }
+    to {
+        transform:rotate(360deg);
+    }
+}

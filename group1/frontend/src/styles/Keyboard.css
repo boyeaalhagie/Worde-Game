@@ -1,0 +1,81 @@
+.keyboard {
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 3px;
+}
+
+.line {
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+}
+
+.line span {
+
+  font-size: 24px;
+  text-transform: uppercase;
+}
+
+.line.special {
+  justify-content: space-between;
+}
+
+.keyboard-button {
+  color: var(--text-color);
+  font-weight: bold;
+  background-color: var(--secondary);
+  width: 42px;
+  height: 54px;
+  border-radius: 5px;
+  margin: 3px;
+  border-color: transparent;
+}
+
+.keyboard-button:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-7px);  
+  cursor: pointer;
+}
+
+.keyboard-button.special {
+  width: 66px;
+  margin-top: -57px;
+}
+
+
+@media screen and (max-width: 1400px) {
+
+}
+
+@media screen and (max-width: 1200px) {
+
+}
+
+@media screen and (max-width: 600px) {
+  .keyboard-button {
+    color: var(--text-color);
+    font-weight: bold;
+    background-color: var(--secondary);
+    width: 28px;
+    height: 33px;
+    border-radius: 5px;
+    margin: 2px;
+    border-color: transparent;
+  }
+  .keyboard-button:hover {
+    box-shadow: var(--shadow);
+    transform: translateY(-5px);
+    cursor: pointer;
+  }
+  .line span {
+    font-size: 18px;
+    text-transform: uppercase;
+  }
+  .keyboard-button.special {
+    width: 45px;
+    margin-top: -35.3px;
+  }
+
+}
